@@ -9,7 +9,7 @@
 gcc cipher.c -o cipher -lssl -lcrypto 
 -lssl -lcrypto provee de funciones criptográficas de openssl 
 
-./cipher "llave" "FilePath"
+./cipher "llave" "/home/itzeeel_cava/Cipher/plaintext.txt"
 
 */
 void handleErrors(void){
@@ -127,7 +127,7 @@ void digest_message(const unsigned char *message, size_t message_len, unsigned c
 }
 
 int main (int argc, char *argv[]){
-    if (argc != 2) {
+    if (argc != 3) {
         printf("Falta ingresar la llave secreta");
         return 1;
     }
@@ -146,9 +146,38 @@ int main (int argc, char *argv[]){
                      };
 
     /* Mensaje a tratar*/
-    unsigned char *plaintext = (unsigned char *)"The quick brown fox jumps over the lazy dog";
-    
+    FILE *file;
+    unsigned char *content = NULL; // Pointer to store the file content
+    long length; // Length of the file
 
+    // Open the file in read mode
+    file = fopen(filePath, "rb");
+    if (file == NULL) {
+        printf("Error opening the file.\n");
+        return 1;
+    }
+
+    // Get the file length
+    fseek(file, 0, SEEK_END);
+    length = ftell(file);
+    fseek(file, 0, SEEK_SET);
+
+    // Allocate memory for the content
+    content = (char *)malloc(length * sizeof(char));
+    if (content == NULL) {
+        printf("Error allocating memory.\n");
+        fclose(file);
+        return 1;
+    }
+
+    // Read the file content into the array
+    fread(content, sizeof(char), length, file);
+
+    // Close the file
+    fclose(file);
+    
+    // Print the content
+    printf("File content:\n%s\n", content);
     
     /*
      * Buffer para el texto cifrado. Asegrar que el buffer es suficientemente largo
@@ -163,7 +192,7 @@ int main (int argc, char *argv[]){
     int decryptedtext_len, ciphertext_len;
 
     /* Encriptación*/
-    ciphertext_len = encrypt (plaintext, strlen ((char *)plaintext), key, iv,
+    ciphertext_len = encrypt (content, strlen ((char *)content), key, iv,
                               ciphertext);
 
     /*BIO_dump_fp es parte de la biblioteca OpenSSL, y se utiliza 
@@ -182,6 +211,7 @@ int main (int argc, char *argv[]){
     printf("Decrypted text is:\n");
     printf("%s\n", decryptedtext);
 
-
+    // Free the memory allocated for the content
+    free(content);
     return 0;
 }
